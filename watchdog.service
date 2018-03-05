@@ -1,0 +1,18 @@
+[Unit]
+Description=watchdog daemon
+After=network.target
+
+[Service]
+ExecStartPre=/usr/sbin/modprobe ipmi_devintf ipmi_si ipmi_msghandler
+ExecStartPre=/usr/sbin/modprobe ipmi_watchdog
+ExecStart=/usr/bin/rkt run \
+  --insecure-options=image \
+  --volume modprobe,kind=host,source=/usr/sbin/modprobe \
+  --mount volume=modprobe,target=/usr/sbin/modprobe \
+  --volume lsmod,kind=host,source=/usr/sbin/lsmod \
+  --mount volume=lsmod,target=/usr/sbin/lsmod \
+  --stage1-from-dir=stage1-fly.aci \
+  docker://quay.io/ukhomeofficedigital/ipmi-watchdog:v0.1.0
+
+[Install]
+WantedBy=multi-user.target

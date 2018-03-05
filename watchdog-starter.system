@@ -1,0 +1,27 @@
+[Unit]
+Description=watchdog daemon
+After=network.target
+
+[Service]
+ExecStartPre=-/usr/bin/docker stop watchdog
+ExecStartPre=-/usr/bin/docker rm watchdog
+ExecStartPre=/usr/sbin/modprobe ipmi_devintf ipmi_si ipmi_msghandler
+ExecStartPre=/usr/sbin/modprobe ipmi_watchdog
+ExecStart=/usr/bin/docker run -i \
+            --name watchdog \
+            --security-opt seccomp:unconfined \
+            --cap-add=SYS_ADMIN \
+            --privileged \
+            --net=host \
+            -e IPMI_WATCHDOG_TIMEOUT="180" \
+            --tmpfs /tmp \
+            --tmpfs /run \
+            -v /sbin/lsmod:/sbin/lsmod \
+            -v /sbin/modprobe:/sbin/modprobe \
+            -v /sys/fs/cgroup:/sys/fs/cgroup:ro \
+            registry.dsp.internal/watchdog
+ExecStop=/usr/bin/docker stop watchdog
+ExecStopPost=/usr/bin/docker rm watchdog
+
+[Install]
+WantedBy=multi-user.target
